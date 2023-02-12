@@ -1,27 +1,30 @@
-def jxl_d():
+def jxl_d(effort=7):
     return {
-        "name": "jxl_d",
-        "cmd": "cjxl %IMG% -d %Q% -j 0 -e 7 --patches=0 %OUT%",
+        "name": f"jxl_e{effort}_d",
+        "cmd": f"cjxl %IMG% -d %Q% -j 0 -e {effort} --patches=0 %OUT%",
         "ext": "jxl",
-        "qualities": [0.1, 5],
+        "qualities": [0, 2],
     }
 
 
-def avif_q():
+def avif_q(speed=4):
     return {
-        "name": "avif_q",
-        "cmd": "avifenc %IMG% --min 0 --max 63 -d 10 -s 4 -j 8 -a end-usage=q -a cq-level=%Q% -a color:enable-chroma-deltaq=1 -a color:deltaq-mode=3 -a color:aq-mode=1 -a color:qm-min=0 -a tune=ssim %OUT%",
+        "name": f"avif_s{speed}_q",
+        "cmd": f"avifenc %IMG% --min 0 --max 63 -d 10 -s {speed} -j 8 -a end-usage=q -a cq-level=%Q% -a color:enable-chroma-deltaq=1 -a color:deltaq-mode=3 -a color:aq-mode=1 -a color:qm-min=0 -a tune=ssim %OUT%",
         "ext": "avif",
         "qualities": [2, 50],
         "quality_integer_only": True
     }
 
 
-def cavif_q():
+def cavif_q(speed=4):
     return {
-        "name": "cavif_Q",
-        "cmd": "cavif -Q %Q% %IMG% -o %OUT%",
+        "name": f"cavif_s{speed}_Q",
+        "cmd": f"cavif -Q %Q% -s {speed} %IMG% -o %OUT% -f",
         "ext": "avif",
-        "qualities": [40, 99],
+        "qualities": [81, 99],
         #
     }
+
+def replace_dot(i):
+  return str(i).replace(".", ",")

@@ -59,7 +59,7 @@ class OptimalQualitySearch:
     def process(self) -> list[Path]:
         pool = Pool(self.nproc)
         res = pool.starmap(
-            self._process,
+            _process,
             (
                 (self.cmd, self.image_path, self.output_dir, self.ext, quality)
                 for quality in self.qualities
@@ -68,34 +68,12 @@ class OptimalQualitySearch:
         pool.close()
         return res
 
-    @staticmethod
-    def _process(
-        cmd_template: list[str],
-        image_path: Path,
-        output_dir: Path,
-        output_ext: str,
-        quality: float,
-    ) -> Path:
-        cmd: list[str] = []
-        output_path = output_dir / f"{image_path.stem}_q{quality}.{output_ext}"
-        for arg in cmd_template:
-            if arg == "%IMG%":
-                cmd.append(str(image_path))
-            elif arg == "%OUT%":
-                cmd.append(str(output_path))
-            elif "%Q%" in arg:
-                cmd.append(arg.replace("%Q%", f"{quality:g}"))
-            else:
-                cmd.append(arg)
-        run(cmd, stdout=DEVNULL, check=True)
-        return output_path
-
     def interactive_seach(self, pregenerated_images: list[Path]):
         # Copy original image to preview dir
         orig_path = self.preview_dir / f"orig{self.image_path.suffix}"
         shutil.copy2(self.image_path, orig_path)
         # Open default image viewer
-        run(["xdg-open", str(orig_path)], check=True)
+        # run(["xdg-open", str(orig_path)], check=True)
 
         cmp_path = self.preview_dir / f"cmp.{self.ext}"
         # Pseudo Binary search for optimal quality
@@ -116,13 +94,13 @@ class OptimalQualitySearch:
             index = bisect.bisect_left(self.qualities, q)
             if self.qualities[index] == q:
                 img = pregenerated_images[index]
-                shutil.copy2(img, cmp_path)
             else:
-                img = self._process(
+                img = _process(
                     self.cmd, self.image_path, self.output_dir, self.ext, q
                 )
                 self.qualities.insert(index, q)
                 pregenerated_images.insert(index, img)
+            shutil.copy2(img, cmp_path)
 
             # Parse input
             while resp not in (">", "<"):
@@ -172,3 +150,29 @@ class OptimalQualitySearch:
                 "quality": result_quality,
             }
             json.dump(data, f)
+
+    def preview_cleanup(self):
+        for i in self.preview_dir.glob("*"):
+            i.unlink()
+
+
+def _process(
+    cmd_template: list[str],
+    image_path: Path,
+    output_dir: Path,
+    output_ext: str,
+    quality: float,
+) -> Path:
+    cmd: list[str] = []
+    output_path = output_dir / f"{image_path.stem}_q{quality:.03f}.{output_ext}"
+    for arg in cmd_template:
+        if arg == "%IMG%":
+            cmd.append(str(image_path))
+        elif arg == "%OUT%":
+            cmd.append(str(output_path))
+        elif "%Q%" in arg:
+            cmd.append(arg.replace("%Q%", f"{quality:g}"))
+        else:
+            cmd.append(arg)
+    run(cmd, stderr=DEVNULL, stdout=DEVNULL, check=True)
+    return output_path
