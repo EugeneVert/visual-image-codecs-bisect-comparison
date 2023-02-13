@@ -8,7 +8,7 @@ import bisect
 import json
 
 
-# class ImageSequenceGenerator:
+OVERWRITE_EXISTING_ENCODES = False
 
 
 class OptimalQualitySearch:
@@ -88,16 +88,14 @@ class OptimalQualitySearch:
                 q = (left + right) // 2
             else:
                 q = (left + right) / 2
-            print(q)
+            print(q, end="")
 
             # Get encoded image
             index = bisect.bisect_left(self.qualities, q)
             if self.qualities[index] == q:
                 img = pregenerated_images[index]
             else:
-                img = _process(
-                    self.cmd, self.image_path, self.output_dir, self.ext, q
-                )
+                img = _process(self.cmd, self.image_path, self.output_dir, self.ext, q)
                 self.qualities.insert(index, q)
                 pregenerated_images.insert(index, img)
             shutil.copy2(img, cmp_path)
@@ -148,6 +146,7 @@ class OptimalQualitySearch:
                 "cmd": self.cmd,
                 "name": result_image_path.name,
                 "quality": result_quality,
+                "size": result_image_path.stat().st_size
             }
             json.dump(data, f)
 
@@ -165,6 +164,9 @@ def _process(
 ) -> Path:
     cmd: list[str] = []
     output_path = output_dir / f"{image_path.stem}_q{quality:.03f}.{output_ext}"
+    if not OVERWRITE_EXISTING_ENCODES and output_path.exists():
+        return output_path
+
     for arg in cmd_template:
         if arg == "%IMG%":
             cmd.append(str(image_path))
@@ -174,5 +176,17 @@ def _process(
             cmd.append(arg.replace("%Q%", f"{quality:g}"))
         else:
             cmd.append(arg)
+
     run(cmd, stderr=DEVNULL, stdout=DEVNULL, check=True)
     return output_path
+
+
+# class ImageSequenceGenerator:
+
+
+def update_filesize_in_data(data: dict[str, dict[str, Any]], output_path: Path):
+    for encodes in data.values():
+        for encode_name, settings in encodes.items():
+            encode_path: Path = output_path / encode_name / settings["name"]
+            size = encode_path.stat().st_size
+            settings["size"] = size
