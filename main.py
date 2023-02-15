@@ -54,6 +54,9 @@ class OptimalQualitySearch:
         step = (max - min) / quality_steps
         self.qualities = [min]
         for _ in range(quality_steps):
+            if self.quality_integer_only:
+                self.qualities.append(round(self.qualities[-1] + step))
+                continue
             self.qualities.append(self.qualities[-1] + step)
 
     def process(self) -> list[Path]:
@@ -146,7 +149,7 @@ class OptimalQualitySearch:
                 "cmd": self.cmd,
                 "name": result_image_path.name,
                 "quality": result_quality,
-                "size": result_image_path.stat().st_size
+                "size": result_image_path.stat().st_size,
             }
             json.dump(data, f)
 
