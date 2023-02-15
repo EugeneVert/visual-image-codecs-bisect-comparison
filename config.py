@@ -7,15 +7,30 @@ def jxl_d(effort: int = 7):
     }
 
 
-def avif_q(speed: int = 4):
+def avif10_q(speed: int = 4):
     return {
-        "name": f"avif_s{speed}_q",
-        "cmd": f"avifenc %IMG% --min 0 --max 63 -d 10 -s {speed} -j 8"
+        "name": f"avif10_s{speed}_q",
+        "cmd": f"avifenc %IMG% --min 1 --max 63 -d 10 -s {speed} -j 6"
         " -a end-usage=q -a cq-level=%Q%"
-        " -a color:enable-chroma-deltaq=1 -a color:deltaq-mode=3"
-        " -a color:aq-mode=1 -a color:qm-min=0 -a tune=ssim %OUT%",
+        " -a color:enable-chroma-deltaq=1 -a color:deltaq-mode=3  -a color:enable-qm=1"
+        " -a color:enable-dnl-denoising=0 -a color:denoise-noise-level=5"
+        " -a tune=ssim %OUT%",
         "ext": "avif",
-        "qualities": [2, 50],
+        "qualities": [2, 26],
+        "quality_integer_only": True,
+    }
+
+
+def avif8_q(speed: int = 4):
+    return {
+        "name": f"avif8_s{speed}_q",
+        "cmd": f"avifenc %IMG% --min 1 --max 63 -d 8 -s {speed} -j 6"
+        " -a end-usage=q -a cq-level=%Q%"
+        " -a color:enable-chroma-deltaq=1 -a color:deltaq-mode=3 -a color:enable-qm=1"
+        " -a color:enable-dnl-denoising=0 -a color:denoise-noise-level=5"
+        " -a tune=butteraugli %OUT%",
+        "ext": "avif",
+        "qualities": [2, 26],
         "quality_integer_only": True,
     }
 
